@@ -310,6 +310,8 @@ export class Island {
   private wireFsm() {
     this.fsm.homeToPetitDelay = State.settings.autoCloseInterval;
     this.fsm.openOnHover = State.settings.openOnHover;
+    this.fsm.minimizeOnHoverAway = State.settings.minimizeOnHoverAway;
+    this.fsm.quickMinimizeDelay = State.settings.hoverAwayDelay ?? 1.5;
     this.fsm.onTransition = (from, to) => {
       // The greeting is over, however it ended: back to his desktop spot.
       if (from === "coucou" && to !== "coucou") this.desktop.launch();
@@ -727,6 +729,9 @@ export class Island {
       Sound.resume();
       if (State.mode === "hidden") this.fsm.mouseEntered();
     });
+    this.wakeStrip.addEventListener("mousemove", () => {
+      if (State.mode === "hidden") this.fsm.mouseEntered();
+    });
 
     this.islandEl.addEventListener("mousedown", (e) => {
       Sound.resume();
@@ -809,8 +814,27 @@ export class Island {
   followPageCursor() {
     window.addEventListener("mousemove", (e) => this.onCursor(e.clientX, e.clientY));
     window.addEventListener("mouseout", (e) => {
-      if (e.relatedTarget == null) this.onCursor(-10_000, -10_000);
+      if (
+        e.relatedTarget == null ||
+        (e as MouseEvent).clientY <= 0 ||
+        (e as MouseEvent).clientY >= window.innerHeight ||
+        (e as MouseEvent).clientX <= 0 ||
+        (e as MouseEvent).clientX >= window.innerWidth
+      ) {
+        this.onCursor(-10_000, -10_000);
+      }
     });
+    document.addEventListener("mouseleave", () => this.onCursor(-10_000, -10_000));
+    document.documentElement.addEventListener("mouseleave", () => this.onCursor(-10_000, -10_000));
+    window.addEventListener("mouseleave", () => this.onCursor(-10_000, -10_000));
+    window.addEventListener("blur", () => this.onCursor(-10_000, -10_000));
+
+    // Watchdog check for cursor departure on Linux compositors
+    window.setInterval(() => {
+      if (this.wasInIsland && !document.querySelector(":hover")) {
+        this.onCursor(-10_000, -10_000);
+      }
+    }, 200);
   }
 
   /**
@@ -827,7 +851,7 @@ export class Island {
   onCursor(x: number, y: number) {
     // WebKitGTK can deliver a mousemove after the pointer has left the layer
     // surface; trusting it re-enters the island and the auto-close never runs.
-    if (this.pointerInside === false) {
+    if (this.pointerInside === false && State.mode !== "hidden") {
       x = -10_000;
       y = -10_000;
     }
@@ -842,8 +866,9 @@ export class Island {
     }
 
     const inIsland =
-      x >= rect.x - HIT_MARGIN && x <= rect.x + rect.w + HIT_MARGIN &&
-      y >= rect.y - HIT_MARGIN && y <= rect.y + rect.h + HIT_MARGIN;
+      (this.collapsed && x >= 0 && y >= 0) ||
+      (x >= rect.x - HIT_MARGIN && x <= rect.x + rect.w + HIT_MARGIN &&
+       y >= rect.y - HIT_MARGIN && y <= rect.y + rect.h + HIT_MARGIN);
 
     // Recorded before the state machine hears of it: a transition it makes
     // right away (open on hover) reads where the pointer is, and must not see
@@ -1198,6 +1223,8 @@ export class Island {
     Sound.setVolume(State.settings.soundVolume);
     this.fsm.homeToPetitDelay = State.settings.autoCloseInterval;
     this.fsm.openOnHover = State.settings.openOnHover;
+    this.fsm.minimizeOnHoverAway = State.settings.minimizeOnHoverAway;
+    this.fsm.quickMinimizeDelay = State.settings.hoverAwayDelay ?? 1.5;
     State.notify();
   }
 

@@ -8,11 +8,12 @@ import { h, svg, clear, dot } from "./dom";
 import { ICONS } from "./icons";
 import { State, type AgentTask } from "../core/state";
 import { Bridge } from "../core/bridge";
-import { isComingSoon, pillDefinition } from "../core/pills";
-import { refreshHookPills } from "../island/integrations";
 import { readActivity, readPulse, readStats } from "../core/github";
 import { githubDetail, githubPulseCard } from "./github";
-import { N_, language, t } from "../i18n/i18n";
+import { idleCard as idleCardExt, idleStatus } from "./integrationIdle";
+import { language, t } from "../i18n/i18n";
+
+export { idleStatus };
 
 /** Same shape as the Swift `timeAgo` computed properties. */
 export function timeAgo(value: unknown): string {
@@ -49,113 +50,8 @@ function arr(id: string, key: string): Record<string, unknown>[] {
 
 // ── Not configured / idle ─────────────────────────────────────────────────────
 
-const OPEN_URLS: Record<string, string> = {
-  integration_resend: "https://resend.com/emails",
-  integration_vercel: "https://vercel.com/dashboard",
-  integration_github: "https://github.com",
-  integration_stripe: "https://dashboard.stripe.com/payments",
-  integration_notion: "https://notion.so",
-  integration_calcom: "https://app.cal.com/bookings",
-};
-
-/** IntegrationCardView.statusLabel on macOS. */
-export function idleStatus(
-  id: string,
-  info: { configured: boolean; error: string | null } | undefined,
-  chatModel: string,
-): { label: string; color: string } {
-  if (isComingSoon(id)) return { label: t("Coming soon"), color: "#6B7079" };
-  if (info?.error) return { label: info.error, color: "#F4505E" };
-  const configured = info?.configured ?? false;
-  const def = pillDefinition(id);
-  const ok = (label: string) => ({ label, color: "#22C55E" });
-  const missing = (label: string) => ({ label, color: "#F4505E" });
-  // Pills driven by hooks never have a key: they are connected once the hooks
-  // are in place (Mac #183). A session replaces this card; nothing is loading.
-  if (def?.connect.kind === "hooks") return configured ? ok(t("Hooks installed")) : missing(t("Hooks not installed"));
-  if (def?.connect.kind === "none") return ok(t("Ready · no setup needed"));
-  if (def?.connect.kind === "server") return configured ? ok(t("Connected")) : missing(t("Not connected"));
-  if (def?.category === "ai") {
-    if (!configured) return missing(t("Key not configured"));
-    return ok(id === "ai_anthropic" ? t("Key configured · {model}", { model: chatModel }) : t("Key configured"));
-  }
-  return configured ? ok(t("Connected · loading…")) : missing(t("Key not configured"));
-}
-
 function idleCard(task: AgentTask, openSettings: () => void): HTMLElement {
-  const info = State.integrations[task.id];
-  const configured = info?.configured ?? false;
-  const def = pillDefinition(task.id);
-  const status = idleStatus(task.id, info, State.settings.model);
-
-  const actions = h("div", { class: "int-actions" });
-  if (task.id === "integration_claude") {
-    actions.append(
-      h("button", {
-        class: "link-btn",
-        style: `color:${task.color}b3`,
-        text: t("Open Visual Studio Code"),
-        onclick: () => void Bridge.openInVSCode(task.sessionCwd ?? null),
-      }),
-    );
-  } else if (task.id === "agent_claude-desktop") {
-    actions.append(
-      h("button", {
-        class: "link-btn",
-        style: `color:${task.color}d9`,
-        text: t("Open Claude"),
-        onclick: () => void Bridge.openClaudeDesktop(),
-      }),
-    );
-  } else if (task.id === "integration_n8n") {
-    actions.append(
-      h("button", {
-        class: "link-btn",
-        style: `color:${task.color}d9`,
-        text: t("Open {name}", { name: "n8n" }),
-        onclick: () => void Bridge.openN8n(),
-      }),
-    );
-  } else if (OPEN_URLS[task.id]) {
-    actions.append(
-      h("button", {
-        class: "link-btn",
-        style: `color:${task.color}d9`,
-        text: t("Open {name}", { name: task.name }),
-        onclick: () => void Bridge.openUrl(OPEN_URLS[task.id]),
-      }),
-    );
-  }
-  const hookPill = def?.connect.kind === "hooks";
-  if (isComingSoon(task.id) || def?.connect.kind === "none") {
-    // Nothing to set up, and nothing to refresh.
-  } else if (configured && (hookPill || def?.category !== "ai")) {
-    actions.append(
-      h("button", {
-        class: "link-btn",
-        style: `color:${task.color}d9`,
-        text: t("Refresh"),
-        // A hook pill has nothing to poll: look at its hooks again instead.
-        onclick: () => void (hookPill ? refreshHookPills() : Bridge.refreshIntegration(task.id)),
-      }),
-    );
-  } else if (!configured) {
-    actions.append(
-      h("button", { class: "link-btn", style: "color:#8e939c", text: t("Settings…"), onclick: openSettings }),
-    );
-  }
-
-  return h(
-    "div",
-    { class: "int-card" },
-    header(
-      task.color,
-      task.id === "integration_claude" ? "VS Code" : task.name,
-      t(def?.subtitle ?? N_("Integration")),
-    ),
-    h("div", { class: "int-status" }, dot(status.color, 5), h("span", { text: status.label })),
-    actions,
-  );
+  return idleCardExt(task, openSettings, header);
 }
 
 // ── Vercel ────────────────────────────────────────────────────────────────────

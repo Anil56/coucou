@@ -24,10 +24,53 @@ pub enum ChatContext {
     Window { app_name: String, title: String, url: Option<String> },
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TokenUsage {
+    pub input_tokens: u64,
+    pub output_tokens: u64,
+    pub total_tokens: u64,
+    pub context_limit: u64,
+    pub remaining_tokens: u64,
+    pub remaining_percentage: f64,
+}
+
+pub fn calculate_usage(model: &str, input_tokens: u64, output_tokens: u64) -> TokenUsage {
+    let m = model.to_lowercase();
+    let context_limit: u64 = if m.contains("pro") {
+        2_000_000
+    } else if m.contains("gemini") || m.contains("flash") {
+        1_000_000
+    } else if m.contains("claude") {
+        200_000
+    } else if m.contains("gpt-4") || m.contains("o1") || m.contains("o3") {
+        128_000
+    } else {
+        200_000
+    };
+    let total_tokens = input_tokens.saturating_add(output_tokens);
+    let remaining_tokens = context_limit.saturating_sub(total_tokens);
+    let remaining_percentage = if context_limit > 0 {
+        ((remaining_tokens as f64 / context_limit as f64) * 100.0).clamp(0.0, 100.0)
+    } else {
+        0.0
+    };
+    TokenUsage {
+        input_tokens,
+        output_tokens,
+        total_tokens,
+        context_limit,
+        remaining_tokens,
+        remaining_percentage,
+    }
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChatReply {
     pub text: String,
+    pub usage: Option<TokenUsage>,
+    pub model: Option<String>,
 }
 
 /// A model a provider offers, for the picker in the chat view.

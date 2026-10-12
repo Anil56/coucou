@@ -87,6 +87,18 @@ export async function refreshHookPills() {
     const info = State.integrations[id] ?? { data: {}, error: null, loaded: false, configured: false };
     State.integrations[id] = { ...info, configured: present };
   }
+  for (const t of State.tasks) {
+    if (t.source === "agent" || !t.isIntegration || t.id.startsWith("agent_")) {
+      const prev = State.integrations[t.id];
+      State.integrations[t.id] = {
+        data: prev?.data ?? {},
+        error: null,
+        loaded: true,
+        configured: true,
+      };
+    }
+  }
+
   State.notify();
 }
 

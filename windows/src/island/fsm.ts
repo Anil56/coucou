@@ -40,6 +40,10 @@ export class IslandStateMachine {
   get openedByHover(): boolean {
     return this.byHover;
   }
+  /** When true, hovering away minimizes the island after the buffer delay. */
+  minimizeOnHoverAway = false;
+  /** Buffer delay before closing when minimizeOnHoverAway is enabled, seconds. */
+  quickMinimizeDelay = 1.5;
 
   /**
    * When the open island will fold, on the performance.now() clock, while the
@@ -53,6 +57,7 @@ export class IslandStateMachine {
   private petitHide: number | null = null;
   private homeCollapse: number | null = null;
   private greetCollapse: number | null = null;
+  private quickMinimize: number | null = null;
 
   // ── Inputs ──────────────────────────────────────────────────────────────────
 
@@ -62,6 +67,7 @@ export class IslandStateMachine {
   }
 
   mouseEntered() {
+    this.clear("quickMinimize");
     if (this.openOnHover && (this.state === "hidden" || this.state === "petit") && !this.pinned) {
       this.cancelTimers();
       this.byHover = true;
@@ -86,6 +92,14 @@ export class IslandStateMachine {
   }
 
   mouseLeft() {
+    if (this.byHover) {
+      this.scheduleHomeCollapse();
+      return;
+    }
+    if (this.minimizeOnHoverAway && !this.pinned) {
+      this.scheduleQuickMinimize();
+      return;
+    }
     switch (this.state) {
       case "hidden":
         break;
@@ -191,7 +205,16 @@ export class IslandStateMachine {
     }, delay * 1000);
   }
 
-  private clear(which: "petitHide" | "homeCollapse" | "greetCollapse") {
+  private scheduleQuickMinimize() {
+    this.clear("quickMinimize");
+    if (this.pinned) return;
+    this.quickMinimize = window.setTimeout(() => {
+      this.quickMinimize = null;
+      if (this.state !== "hidden") this.transition("hidden");
+    }, this.quickMinimizeDelay * 1000);
+  }
+
+  private clear(which: "petitHide" | "homeCollapse" | "greetCollapse" | "quickMinimize") {
     const id = this[which];
     if (id != null) window.clearTimeout(id);
     this[which] = null;
@@ -202,6 +225,7 @@ export class IslandStateMachine {
     this.clear("petitHide");
     this.clear("homeCollapse");
     this.clear("greetCollapse");
+    this.clear("quickMinimize");
   }
 
   private transition(next: FsmState) {

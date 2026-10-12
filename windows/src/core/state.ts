@@ -97,6 +97,16 @@ export interface IntegrationInfo {
   configured: boolean;
 }
 
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  contextLimit: number;
+  remainingTokens: number;
+  remainingPercentage: number;
+  model?: string;
+}
+
 export interface Settings {
   soundEnabled: boolean;
   soundVolume: number;
@@ -162,6 +172,10 @@ export interface Settings {
     onDesktop: boolean;
     spot: { x: number; y: number; space: string } | null;
   };
+  /** Automatically minimize when the cursor leaves the island. */
+  minimizeOnHoverAway: boolean;
+  /** Buffer delay before minimizing after cursor leaves, seconds. */
+  hoverAwayDelay: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -190,6 +204,8 @@ export const DEFAULT_SETTINGS: Settings = {
   mochiOutfit: DEFAULT_OUTFIT,
   pillColors: {},
   language: "",
+  minimizeOnHoverAway: true,
+  hoverAwayDelay: 1.5,
 };
 
 type Listener = () => void;
@@ -225,6 +241,7 @@ class AppState {
   noteMessage: string | null = null;
   searchResult: SearchResult | null = null;
   chatHistory: ChatMessage[] = [];
+  modelUsage: TokenUsage | null = null;
   pendingApproval: ApprovalInfo | null = null;
   /** The pill that was in front when the card came up; it comes back after. */
   focusBeforeApproval: string | null = null;

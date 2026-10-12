@@ -369,10 +369,6 @@ pub fn unblock_webview_drops(_app: &AppHandle) {}
 /// up to the window manager.
 pub fn make_non_activating(win: &WebviewWindow) {
     let Ok(gw) = win.gtk_window() else { return };
-    // The pointer watch reports the pointer leaving on every kind of window:
-    // a regular one (GNOME, X11) misses `mouseout` just as a layer surface does.
-    ISLAND_GTK.with(|cell| *cell.borrow_mut() = Some(gw.clone()));
-    watch_pointer_leave(win);
     let wanted = layer_shell_wanted();
     let supported = unsafe { layer::gtk_layer_is_supported() } != 0;
     if !wanted || !supported || gw.is_realized() {
@@ -385,18 +381,6 @@ pub fn make_non_activating(win: &WebviewWindow) {
         };
         crate::log::line(format!("island is a regular window ({why})"));
         gw.set_accept_focus(false);
-        if !gw.is_realized() {
-            // On X11 a Dock is kept above everything and is the only kind of
-            // window, besides the desktop, that "show desktop" leaves alone.
-            // COUCOU_DOCK=0 falls back to a utility window.
-            let dock = std::env::var("COUCOU_DOCK").map(|v| v != "0").unwrap_or(true);
-            gw.set_type_hint(if dock {
-                gtk::gdk::WindowTypeHint::Dock
-            } else {
-                gtk::gdk::WindowTypeHint::Utility
-            });
-        }
-        gw.set_keep_above(true);
         return;
     }
     // tao gives undecorated Wayland windows an empty titlebar to force
@@ -433,6 +417,8 @@ pub fn make_non_activating(win: &WebviewWindow) {
         }
         gtk::glib::Propagation::Proceed
     });
+    ISLAND_GTK.with(|cell| *cell.borrow_mut() = Some(gw.clone()));
+    watch_pointer_leave(win);
     LAYER_SURFACE.store(true, Ordering::Relaxed);
     crate::log::line("island is a layer-shell overlay");
 }
@@ -465,6 +451,9 @@ fn watch_pointer_leave(win: &WebviewWindow) {
 /// Starts or parks the pointer watch. Called with the island's collapsed state;
 /// safe from any thread (the timer itself lives on the GTK main loop).
 pub fn set_pointer_watch(active: bool) {
+    if !LAYER_SURFACE.load(Ordering::Relaxed) {
+        return;
+    }
     WATCH_WANTED.store(active, Ordering::Relaxed);
     if active {
         gtk::glib::MainContext::default().invoke(start_pointer_watch);

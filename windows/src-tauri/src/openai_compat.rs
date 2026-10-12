@@ -159,7 +159,9 @@ pub async fn send(
     query: String,
     context: Option<ChatContext>,
 ) -> Result<ChatReply, String> {
-    let key = secrets::get(p.key).ok_or_else(|| tf("{name} API key missing. Add it in Settings.", &[("name", p.name)]))?;
+    let key = secrets::get(p.key)
+        .or_else(|| if p.id == "google" { secrets::get("gemini-api-key") } else { None })
+        .ok_or_else(|| tf("{name} API key missing. Add it in Settings.", &[("name", p.name)]))?;
     if model.is_empty() {
         return Err(tf("Pick a {name} model above the chat box.", &[("name", p.name)]));
     }
@@ -184,9 +186,19 @@ pub async fn send(
     let json: Value = serde_json::from_slice(&bytes).map_err(|e| tf("Bad API response: {error}", &[("error", &e.to_string())]))?;
     let text = reply_text(p, &json)?;
 
+    let usage = json.get("usage").map(|u| {
+        let in_tok = u.get("prompt_tokens").and_then(Value::as_u64).unwrap_or(0);
+        let out_tok = u.get("completion_tokens").and_then(Value::as_u64).unwrap_or(0);
+        chat::calculate_usage(model, in_tok, out_tok)
+    });
+
     let plain = chat::plain_question(turn.first, context.as_ref(), &query);
     chat.commit(&turn, user, json!({ "role": "assistant", "content": text }), &plain, &text);
-    Ok(ChatReply { text })
+    Ok(ChatReply {
+        text,
+        usage,
+        model: Some(model.to_string()),
+    })
 }
 
 /// The provider's chat models. Only ever asked with the user's key, once they

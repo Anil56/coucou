@@ -5,9 +5,11 @@ mod agents;
 mod chat;
 mod claude;
 mod codex_plan;
+pub mod config;
 mod config_file;
 mod desktop;
 mod files;
+mod gemini;
 mod github;
 mod hooks;
 mod i18n;
@@ -465,8 +467,24 @@ async fn chat_send(
     chat: State<'_, Chat>,
     query: String,
     context: Option<ChatContext>,
+    provider: Option<String>,
+    model: Option<String>,
 ) -> Result<ChatReply, String> {
-    let settings = shared.settings.lock().unwrap().clone();
+    let mut settings = shared.settings.lock().unwrap().clone();
+    if let Some(p) = provider {
+        settings.chat_provider = if p == "gemini" || p == "antigravity" {
+            "google".to_string()
+        } else {
+            p
+        };
+    }
+    if let Some(m) = model {
+        if settings.chat_provider == "anthropic" || settings.chat_provider.is_empty() {
+            settings.model = m;
+        } else {
+            settings.chat_models.insert(settings.chat_provider.clone(), m);
+        }
+    }
     chat::send(&app, &chat, &settings, query, context).await
 }
 

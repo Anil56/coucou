@@ -456,7 +456,7 @@ pub fn refresh_click_through(app: &AppHandle, gate: &PollGate) {
         Some((0.0, 0.0, STRIP_W, STRIP_H))
     } else {
         let r = *gate.rect.lock().unwrap();
-        if r.w <= 0.0 {
+        if r.w <= 0.0 || r.h <= 0.0 {
             // Nothing drawn yet: nothing takes the mouse.
             Some((0.0, 0.0, 0.0, 0.0))
         } else {

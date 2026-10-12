@@ -29,6 +29,7 @@ const KEY_STORE = navigator.userAgent.includes("Windows")
   ? "Windows Credential Manager"
   : "Secret Service (GNOME Keyring, KWallet)";
 
+
 let settings: Settings = { ...DEFAULT_SETTINGS };
 let version = "";
 
@@ -936,6 +937,19 @@ function generalSection(): HTMLElement {
     void save();
   });
 
+  const hoverAwayBuffer = h("input", {
+    type: "number",
+    min: "0.2",
+    max: "30",
+    step: "0.1",
+    value: String(settings.hoverAwayDelay ?? 1.5),
+  }) as HTMLInputElement;
+  hoverAwayBuffer.addEventListener("change", () => {
+    settings.hoverAwayDelay = Math.max(0.1, Math.min(30, Number(hoverAwayBuffer.value) || 1.5));
+    hoverAwayBuffer.value = String(settings.hoverAwayDelay);
+    void save();
+  });
+
   return h(
     "section",
     {},
@@ -956,6 +970,16 @@ function generalSection(): HTMLElement {
       h("label", { text: t("Auto-close") }),
       autoClose,
       h("span", { class: "hint", text: t("seconds after you leave the island") }),
+    ),
+    h("div", { class: "row" },
+      h("label", { text: t("Minimize on hover away") }),
+      toggle(settings.minimizeOnHoverAway, (v) => { settings.minimizeOnHoverAway = v; void save(); }),
+      h("span", { class: "hint", text: t("minimize when cursor leaves the island") }),
+    ),
+    h("div", { class: "row" },
+      h("label", { text: t("Hover-away buffer") }),
+      hoverAwayBuffer,
+      h("span", { class: "hint", text: t("seconds buffer before closing (default 1.5s)") }),
     ),
     h("div", { class: "row" },
       h("label", { text: t("Island lives on") }),
@@ -1369,6 +1393,7 @@ async function render() {
     chatProvidersSection(chatKeys, keyChanged),
     localSection(customKey),
     activePillsSection(connected),
+
     integrationsSection(present),
     phoneSection(settings.phoneLink ?? false, toggle, settings),
     generalSection(),

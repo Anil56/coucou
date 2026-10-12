@@ -22,6 +22,7 @@ use crate::{net, secrets};
 pub const KEY: &str = "anthropic-api-key";
 const DEFAULT_ENDPOINT: &str = "https://api.anthropic.com/v1/messages";
 const BASE_URL_VAR: &str = "COUCOU_ANTHROPIC_BASE_URL";
+
 const ANTHROPIC_VERSION: &str = "2023-06-01";
 /// Server-side fallback: on a policy decline the API retries the same request on
 /// a fallback model inside the same call, so the island never shows a dead end.
@@ -157,7 +158,16 @@ pub async fn send(
     // next turn has the right context.
     let plain = chat::plain_question(turn.first, context.as_ref(), &query);
     chat.commit(&turn, user, json!({ "role": "assistant", "content": blocks }), &plain, &text);
-    Ok(ChatReply { text })
+    let usage = response.get("usage").map(|u| {
+        let in_tok = u.get("input_tokens").and_then(Value::as_u64).unwrap_or(0);
+        let out_tok = u.get("output_tokens").and_then(Value::as_u64).unwrap_or(0);
+        chat::calculate_usage(model, in_tok, out_tok)
+    });
+    Ok(ChatReply {
+        text,
+        usage,
+        model: Some(model.to_string()),
+    })
 }
 
 async fn call(endpoint: &Url, key: &str, body: &Value) -> Result<Value, String> {

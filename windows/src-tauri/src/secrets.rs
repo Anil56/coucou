@@ -10,6 +10,7 @@ pub const KNOWN_KEYS: &[&str] = &[
     "anthropic-api-key",
     "openai-api-key",
     "google-api-key",
+    "gemini-api-key",
     "openrouter-api-key",
     "openai-compatible-key",
     "n8n-url",

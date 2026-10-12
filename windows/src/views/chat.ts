@@ -1,10 +1,6 @@
 // Chat view — DOM port of PromptView / ChatBubble / TypingDotsView /
 // ModelPickerView from IslandViewContent.swift.
-//
-// Answers are rendered as Markdown (markdown.ts). A local model streams its
-// answer: Rust sends `chat-delta` events with the text visible so far. The
-// model name above the text field opens the picker: provider chips, then the
-// models of the chosen provider, asked for only once it is picked.
+// Supports Claude and Antigravity / Gemini with model usage meter.
 
 import { h, svg, clear } from "./dom";
 import { ICONS } from "./icons";
@@ -15,6 +11,11 @@ import {
 } from "../core/providers";
 import { Sound } from "../core/sound";
 import { State, type ChatMessage } from "../core/state";
+import {
+  formatTokens,
+  getCurrentModelUsage,
+  sendChatMessage,
+} from "../hooks/useChatProvider";
 import type { ViewHost } from "./views";
 import { N_, t, tl } from "../i18n/i18n";
 
@@ -52,7 +53,6 @@ function typingDots(): HTMLElement {
   );
 }
 
-/** The coloured chip showing what the question is about (a dropped file). */
 function contextChip(label: string): HTMLElement {
   const chip = h("div", { class: "chip" }, h("i", { class: "chip-dot" }), h("span", { text: label }));
   requestAnimationFrame(() => chip.classList.add("settled"));
@@ -72,13 +72,11 @@ interface Picker {
   readonly isOpen: boolean;
 }
 
-/** Provider chips, then the chosen provider's models — ModelPickerView. */
 function buildPicker(onChange: () => void): Picker {
   const chips = h("div", { class: "picker-chips" });
   const list = h("div", { class: "picker-list" });
   const el = h("div", { class: "picker" }, chips, h("div", { class: "picker-rule" }), list);
 
-  /** Models already asked for, by provider; a model server is asked again each time. */
   const cache = new Map<string, ModelInfo[]>();
   let isOpen = false;
   let request = 0;
@@ -89,7 +87,7 @@ function buildPicker(onChange: () => void): Picker {
       const on = p.id === State.settings.chatProvider;
       const chip = h(
         "button",
-        { class: on ? "picker-chip on" : "picker-chip", style: `--accent:${p.accent}` },
+        { class: on ? `picker-chip on provider-${p.id}` : `picker-chip provider-${p.id}` },
         h("i", { class: "picker-dot" }),
         h("span", { text: t(p.name) }),
       );
@@ -128,64 +126,63 @@ function buildPicker(onChange: () => void): Picker {
       const on = m.id === current;
       const row = h(
         "button",
-        { class: on ? "picker-model on" : "picker-model", style: `--accent:${p.accent}`, title: m.id },
-        h("span", { class: "picker-model-name", text: m.label }),
-        on ? svg(ICONS.check, 11, { stroke: 2.2 }) : null,
+        { class: on ? "picker-row on" : "picker-row" },
+        h("span", { class: "picker-name", text: m.label || m.id }),
+        on ? svg(ICONS.check, 10, { stroke: 2.2 }) : h("span"),
       );
       row.addEventListener("click", () => {
         State.settings = withModel(State.settings, p.id, m.id);
         saveSettings();
-        Sound.play("blip");
+        Sound.play("pop");
         close();
+        onChange();
       });
       list.append(row);
     }
-    list.querySelector(".picker-model.on")?.scrollIntoView({ block: "nearest" });
   }
 
   async function loadModels() {
     const p = providerDef(State.settings.chatProvider);
-    const ticket = ++request;
-    const cached = p.urlField ? undefined : cache.get(p.id);
+    const current = activeModel(State.settings);
+    const cached = cache.get(p.id);
     if (cached) {
       drawModels(p, cached);
       return;
     }
-    // Nothing is asked of a provider that has no key yet.
-    if (p.key && !(await Bridge.secretPresent(p.key))) {
-      if (ticket === request) status(t(STRINGS.noKey), true);
-      return;
-    }
-    if (ticket !== request) return;
+    const myRequest = ++request;
     status(t(STRINGS.loading));
     try {
       const models = await Bridge.chatModels(p.id);
-      if (ticket !== request) return;
+      if (myRequest !== request) return;
       if (!p.urlField) cache.set(p.id, models);
-      const keep = pickModel(p, models.map((m) => m.id), activeModel(State.settings));
-      if (keep && keep !== activeModel(State.settings)) {
-        State.settings = withModel(State.settings, p.id, keep);
+      const picked = pickModel(p, models.map((m) => m.id), current);
+      if (picked && picked !== current) {
+        State.settings = withModel(State.settings, p.id, picked);
         saveSettings();
         onChange();
       }
       drawModels(p, models);
     } catch (err) {
-      if (ticket === request) status(String(err).replace(/^Error:\s*/, ""), Boolean(p.key));
+      if (myRequest !== request) return;
+      const text = String(err).replace(/^Error:\s*/, "");
+      const withSettings = text === t(STRINGS.noKey) || p.key != null;
+      status(text, withSettings);
     }
   }
 
   function open() {
+    if (isOpen) return;
     isOpen = true;
-    el.classList.add("on");
+    el.classList.add("open");
     drawChips();
-    onChange();
     void loadModels();
+    onChange();
   }
 
   function close() {
+    if (!isOpen) return;
     isOpen = false;
-    request++;
-    el.classList.remove("on");
+    el.classList.remove("open");
     onChange();
   }
 
@@ -224,24 +221,86 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
   );
   const modelRow = h("div", { class: "model-row" }, modelBtn);
 
+  // Model token & context usage section
+  const usageModelName = h("span", { class: "chat-usage-model" });
+  const usageTokens = h("span", { class: "chat-usage-tokens" });
+  const usageBadge = h("span", { class: "chat-usage-badge" });
+
+  const usageBox = document.createElement("div");
+  usageBox.className = "chat-usage-meter-box";
+  const usageSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  usageSvg.setAttribute("viewBox", "0 0 100 4");
+  usageSvg.setAttribute("preserveAspectRatio", "none");
+  usageSvg.setAttribute("class", "chat-usage-svg");
+
+  const usageTrack = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  usageTrack.setAttribute("x", "0");
+  usageTrack.setAttribute("y", "0");
+  usageTrack.setAttribute("width", "100");
+  usageTrack.setAttribute("height", "4");
+  usageTrack.setAttribute("rx", "2");
+  usageTrack.setAttribute("class", "chat-usage-track");
+
+  const usageFill = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  usageFill.setAttribute("x", "0");
+  usageFill.setAttribute("y", "0");
+  usageFill.setAttribute("width", "0");
+  usageFill.setAttribute("height", "4");
+  usageFill.setAttribute("rx", "2");
+  usageFill.setAttribute("class", "chat-usage-fill");
+
+  usageSvg.append(usageTrack, usageFill);
+  usageBox.append(usageSvg);
+
+  const usageBar = h(
+    "div",
+    { class: "chat-usage-bar" },
+    h(
+      "div",
+      { class: "chat-usage-header" },
+      h("div", { class: "chat-usage-left" }, usageModelName, usageTokens),
+      usageBadge,
+    ),
+    usageBox,
+  );
+
+  function updateUsageDisplay() {
+    const usage = getCurrentModelUsage();
+    const currentModel = usage.model || activeModel(State.settings);
+    usageModelName.textContent = currentModel;
+    usageTokens.textContent = `Used: ${formatTokens(usage.totalTokens)} / ${formatTokens(usage.contextLimit)}`;
+    usageBadge.textContent = `${usage.remainingPercentage.toFixed(1)}% rem (${formatTokens(usage.remainingTokens)})`;
+    usageBadge.title = `${usage.remainingTokens.toLocaleString()} tokens remaining (${usage.remainingPercentage.toFixed(2)}%)`;
+
+    usageBadge.classList.toggle("warn", usage.remainingPercentage <= 30 && usage.remainingPercentage > 10);
+    usageBadge.classList.toggle("crit", usage.remainingPercentage <= 10);
+    usageFill.classList.toggle("warn", usage.remainingPercentage <= 30 && usage.remainingPercentage > 10);
+    usageFill.classList.toggle("crit", usage.remainingPercentage <= 10);
+
+    const usedPercent = usage.contextLimit > 0
+      ? (usage.totalTokens / usage.contextLimit) * 100
+      : 0;
+    const clamped = Math.max(0, Math.min(100, usedPercent));
+    usageFill.setAttribute("width", clamped.toFixed(1));
+  }
+
   const body = h("div", { class: "chat-body" });
   const picker = buildPicker(() => {
     body.classList.toggle("picking", picker.isOpen);
     drawModelButton();
+    updateUsageDisplay();
   });
-  body.append(chipRow, log, picker.el, modelRow, bar);
+  body.append(chipRow, log, picker.el, modelRow, usageBar, bar);
 
   const el = h("div", { class: "view" }, h("div", { class: "card wash chat-card" }, body));
-  (el.querySelector(".card") as HTMLElement).style.setProperty("--wash", "rgba(99,102,241,0.5)");
 
   let sending = false;
   let renderedCount = -1;
-  // A local model answers token by token: where its text so far is shown.
   let live: HTMLElement | null = null;
 
   function drawModelButton() {
     const p = providerDef(State.settings.chatProvider);
-    modelDot.style.background = p.accent;
+    modelDot.className = `model-dot provider-${p.id}`;
     modelName.textContent = activeModel(State.settings) || t(STRINGS.noModel);
     modelBtn.classList.toggle("open", picker.isOpen);
     modelBtn.disabled = sending;
@@ -254,7 +313,7 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
   });
 
   void onEvent<string>("chat-delta", (text) => {
-    if (!sending || !text) return; // nothing visible yet: the dots stay
+    if (!sending || !text) return;
     if (!live) {
       live = h("div", { class: "reply" });
       log.querySelector(".typing")?.parentElement?.remove();
@@ -283,10 +342,11 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
       State.chatHistory.length === 1 && file ? { kind: "file", name: file.name, path: file.path } : null;
 
     try {
-      const reply = await Bridge.chatSend(query, context);
+      const reply = await sendChatMessage(query, context);
       State.chatHistory.push({ id: nextId++, role: "assistant", content: reply.text });
       State.stateOverride = null;
       Sound.play("finish");
+      updateUsageDisplay();
     } catch (err) {
       State.stateOverride = null;
       State.noteMessage = String(err).replace(/^Error:\s*/, "");
@@ -295,8 +355,9 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
     } finally {
       sending = false;
       live = null;
-      renderedCount = -1; // the finished answer replaces the streamed one
+      renderedCount = -1;
       drawModelButton();
+      updateUsageDisplay();
       State.notify();
       onHeightChange();
       input.focus();
@@ -313,7 +374,7 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
       e.preventDefault();
       picker.close();
     }
-    e.stopPropagation(); // Escape closes the island, not the chat
+    e.stopPropagation();
   });
 
   return {
@@ -337,9 +398,9 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
         log.scrollTop = log.scrollHeight;
       }
 
-      // Leaving the chat folds the picker away.
       if (State.view !== "prompt" && picker.isOpen) picker.close();
       drawModelButton();
+      updateUsageDisplay();
 
       input.placeholder = t(State.chatHistory.length === 0 ? STRINGS.placeholderFirst : STRINGS.placeholderNext);
       input.disabled = sending;
