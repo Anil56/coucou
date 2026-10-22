@@ -1414,10 +1414,6 @@ async function render() {
       text: t("No telemetry. Network requests only go to the services you configure yourself."),
     }));
   }
-      class: "hint",
-      text: t("No telemetry. Network requests only go to the services you configure yourself."),
-    }));
-  }
 }
 
 void main();

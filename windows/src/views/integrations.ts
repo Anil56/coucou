@@ -11,7 +11,7 @@ import { Bridge } from "../core/bridge";
 import { readActivity, readPulse, readStats } from "../core/github";
 import { githubDetail, githubPulseCard, type ForgeCardOptions } from "./github";
 import { idleCard as idleCardExt, idleStatus } from "./integrationIdle";
-import { N_, language, t } from "../i18n/i18n";
+import { language, t } from "../i18n/i18n";
 
 export { idleStatus };
 
