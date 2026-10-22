@@ -38,6 +38,7 @@ const CUSTOM: &str = r##"{
   "phoneServices": ["integration_stripe"],
   "phoneRelay": true,
   "phoneRelayUrl": "wss://relay.example.workers.dev",
+  "showClock": true,
   "minimizeOnHoverAway": false,
   "hoverAwayDelay": 2.5
 }"##;
@@ -453,6 +454,7 @@ fn the_file_holds_the_camel_case_keys_the_front_end_uses() {
             "phoneServices",
             "phoneRelay",
             "phoneRelayUrl",
+            "showClock",
             "minimizeOnHoverAway",
             "hoverAwayDelay",
         ]

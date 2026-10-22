@@ -64,6 +64,14 @@ export function idleCard(
         },
       }),
     );
+  } else if (task.id === "agent_claude-desktop") {
+    actions.append(
+      h("button", {
+        class: "link-btn",
+        text: t("Open Claude"),
+        onclick: () => void Bridge.openClaudeDesktop(),
+      }),
+    );
   } else if (task.id === "integration_n8n") {
     actions.append(
       h("button", {

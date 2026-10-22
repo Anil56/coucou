@@ -97,6 +97,8 @@ pub struct Settings {
     pub phone_relay: bool,
     /// The relay's address (`wss://…`), empty until the user enters it. Not a secret. Owned by Rust.
     pub phone_relay_url: String,
+    /// The date and time in the middle of the compact island. Off by default.
+    pub show_clock: bool,
     /// Automatically minimize when the cursor leaves the island.
     #[serde(default = "default_minimize_on_hover_away")]
     pub minimize_on_hover_away: bool,
@@ -176,6 +178,7 @@ impl Default for Settings {
             phone_services: Vec::new(),
             phone_relay: false,
             phone_relay_url: String::new(),
+            show_clock: false,
             minimize_on_hover_away: true,
             hover_away_delay: 1.5,
         }
