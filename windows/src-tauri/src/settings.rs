@@ -89,6 +89,8 @@ pub struct Settings {
     pub phone_diffs: bool,
     /// Show the Claude and Codex plan usage on the phone (cap `usage`). Off by default; owned by Rust like the other phone switches.
     pub phone_usage: bool,
+    /// Show last week's recap (counts only) on the phone (cap `recap`). Off by default; owned by Rust like the other phone switches.
+    pub phone_recap: bool,
     /// The service pills whose cards the phone may see, by pill id (cap `services`). None by default; owned by Rust like the other phone switches.
     pub phone_services: Vec<String>,
     /// Reach the phone through the user's own relay when it is not on this network (phone_link/relay_client.rs).
@@ -175,6 +177,7 @@ impl Default for Settings {
             phone_answers: false,
             phone_diffs: false,
             phone_usage: false,
+            phone_recap: false,
             phone_services: Vec::new(),
             phone_relay: false,
             phone_relay_url: String::new(),

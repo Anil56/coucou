@@ -35,6 +35,7 @@ const CUSTOM: &str = r##"{
   "phoneAnswers": true,
   "phoneDiffs": true,
   "phoneUsage": true,
+  "phoneRecap": true,
   "phoneServices": ["integration_stripe"],
   "phoneRelay": true,
   "phoneRelayUrl": "wss://relay.example.workers.dev",
@@ -144,6 +145,109 @@ fn a_file_from_before_the_desktop_mochi_keeps_him_in_the_island() {
     assert_eq!(loaded.desktop_mochi, DesktopMochiPref::default());
     assert!(!loaded.desktop_mochi.on_desktop);
     assert_eq!(loaded.mochi_outfit, "witchHat");
+}
+
+#[test]
+fn a_file_from_before_the_phone_link_keeps_it_off() {
+    // The link opens a port on the local network: it is never on by default,
+    // and an older file must not be read as consent.
+    assert!(!Settings::default().phone_link);
+    let loaded = parse(&custom_with("phoneLink", None)).unwrap();
+    assert!(!loaded.phone_link);
+    assert_eq!(loaded.mochi_outfit, "witchHat");
+    assert!(parse(&custom_with("phoneLink", Some(serde_json::json!(true)))).unwrap().phone_link);
+
+    // A value of the wrong type does not switch it on either, and costs nothing else.
+    let (dir, file) = scratch("phone-link");
+    std::fs::write(&file, custom_with("phoneLink", Some(serde_json::json!("yes")))).unwrap();
+    let odd = load_from(&file);
+    assert!(!odd.phone_link);
+    assert_eq!(odd.mochi_outfit, "witchHat");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn a_file_from_before_phone_chat_keeps_it_off_and_empty() {
+    // Chat spends the user's API credit: never on by default, and an older file is not consent.
+    let d = Settings::default();
+    assert!(!d.phone_chat);
+    assert!(d.phone_chat_models.is_empty());
+    let loaded = parse(&custom_with("phoneChat", None)).unwrap();
+    assert!(!loaded.phone_chat);
+    assert!(parse(&custom_with("phoneChat", Some(serde_json::json!(true)))).unwrap().phone_chat);
+    let odd = parse(&custom_with("phoneChat", Some(serde_json::json!("yes")))).unwrap();
+    assert!(!odd.phone_chat, "a wrong type does not switch it on");
+    assert_eq!(odd.mochi_outfit, "witchHat");
+    let models = parse(&custom_with("phoneChatModels", Some(serde_json::json!(["openai/gpt-x"])))).unwrap();
+    assert_eq!(models.phone_chat_models, vec!["openai/gpt-x".to_string()]);
+    let bad = parse(&custom_with("phoneChatModels", Some(serde_json::json!("openai/gpt-x")))).unwrap();
+    assert!(bad.phone_chat_models.is_empty());
+}
+
+#[test]
+fn a_file_from_before_phone_answers_keeps_it_off() {
+    // Answering for the agent from the phone is never on by default; an older file is not consent.
+    assert!(!Settings::default().phone_answers);
+    assert!(!parse(&custom_with("phoneAnswers", None)).unwrap().phone_answers);
+    assert!(parse(&custom_with("phoneAnswers", Some(serde_json::json!(true)))).unwrap().phone_answers);
+    assert!(!parse(&custom_with("phoneAnswers", Some(serde_json::json!("yes")))).unwrap().phone_answers, "a wrong type does not switch it on");
+}
+
+#[test]
+fn a_file_from_before_phone_diffs_keeps_it_off() {
+    // Showing what an agent changed on the phone is never on by default; an older file is not consent.
+    assert!(!Settings::default().phone_diffs);
+    assert!(!parse(&custom_with("phoneDiffs", None)).unwrap().phone_diffs);
+    assert!(parse(&custom_with("phoneDiffs", Some(serde_json::json!(true)))).unwrap().phone_diffs);
+    assert!(!parse(&custom_with("phoneDiffs", Some(serde_json::json!("yes")))).unwrap().phone_diffs, "a wrong type does not switch it on");
+}
+
+#[test]
+fn a_file_from_before_phone_usage_keeps_it_off() {
+    assert!(!Settings::default().phone_usage);
+    assert!(!parse(&custom_with("phoneUsage", None)).unwrap().phone_usage);
+    assert!(parse(&custom_with("phoneUsage", Some(serde_json::json!(true)))).unwrap().phone_usage);
+    assert!(!parse(&custom_with("phoneUsage", Some(serde_json::json!("yes")))).unwrap().phone_usage, "a wrong type does not switch it on");
+}
+
+#[test]
+fn a_file_from_before_the_weekly_recap_on_the_phone_keeps_it_off() {
+    // Sending last week's numbers to the phone is never on by default; an older file is not consent.
+    assert!(!Settings::default().phone_recap);
+    assert!(!parse(&custom_with("phoneRecap", None)).unwrap().phone_recap);
+    assert!(parse(&custom_with("phoneRecap", Some(serde_json::json!(true)))).unwrap().phone_recap);
+    assert!(!parse(&custom_with("phoneRecap", Some(serde_json::json!("yes")))).unwrap().phone_recap, "a wrong type does not switch it on");
+}
+
+#[test]
+fn a_file_from_before_the_relay_keeps_it_off_and_empty() {
+    assert!(!Settings::default().phone_relay);
+    assert!(Settings::default().phone_relay_url.is_empty());
+    let old = parse(&custom_with("phoneRelay", None)).unwrap();
+    assert!(!old.phone_relay);
+    assert!(parse(&custom_with("phoneRelay", Some(serde_json::json!(true)))).unwrap().phone_relay);
+    assert!(!parse(&custom_with("phoneRelay", Some(serde_json::json!("yes")))).unwrap().phone_relay, "a wrong type does not switch it on");
+    assert!(parse(&custom_with("phoneRelayUrl", Some(serde_json::json!(5)))).unwrap().phone_relay_url.is_empty());
+}
+
+#[test]
+fn a_file_from_before_phone_services_shows_none() {
+    // Showing a service on the phone is never on by default; an older file is not consent.
+    assert!(Settings::default().phone_services.is_empty());
+    assert!(parse(&custom_with("phoneServices", None)).unwrap().phone_services.is_empty());
+    assert_eq!(parse(&custom_with("phoneServices", Some(serde_json::json!(["integration_stripe"])))).unwrap().phone_services, vec!["integration_stripe".to_string()]);
+    assert!(parse(&custom_with("phoneServices", Some(serde_json::json!("integration_stripe")))).unwrap().phone_services.is_empty(), "a wrong type shows none");
+}
+
+#[test]
+fn a_file_from_before_phone_details_keeps_them_off() {
+    // Details can include commands and folder names: never on by default, an older file is not consent.
+    assert!(!Settings::default().phone_details);
+    assert!(!parse(&custom_with("phoneDetails", None)).unwrap().phone_details);
+    assert!(parse(&custom_with("phoneDetails", Some(serde_json::json!(true)))).unwrap().phone_details);
+    let odd = parse(&custom_with("phoneDetails", Some(serde_json::json!("yes")))).unwrap();
+    assert!(!odd.phone_details, "a wrong type does not switch it on");
+    assert_eq!(odd.mochi_outfit, "witchHat");
 }
 
 #[test]
@@ -384,112 +488,4 @@ fn a_field_name_cannot_start_a_line_of_its_own_in_the_log() {
     assert!(line.contains(r"volume\r\n2026-01-02"));
 }
 
-// ── Writing ───────────────────────────────────────────────────────────────
-
-/// A dotfiles setup keeps the real file elsewhere and links to it.
-#[cfg(unix)]
-#[test]
-fn a_save_through_a_symlink_keeps_the_link_and_writes_its_target() {
-    let (dir, file) = scratch("symlink");
-    let real = dir.join("dotfiles-settings.json");
-    std::fs::write(&real, CUSTOM).unwrap();
-    std::os::unix::fs::symlink(&real, &file).unwrap();
-
-    save_to(&file, &Settings::default()).unwrap();
-    assert!(std::fs::symlink_metadata(&file).unwrap().file_type().is_symlink());
-    assert_eq!(shown(&parse(&std::fs::read(&real).unwrap()).unwrap()), defaults());
-    assert_eq!(names(&dir), ["dotfiles-settings.json", "settings.json"]);
-    let _ = std::fs::remove_dir_all(&dir);
-}
-
-#[test]
-fn every_field_survives_a_save_and_a_load() {
-    let settings: Settings = serde_json::from_str(CUSTOM).unwrap();
-    let (dir, file) = scratch("round-trip");
-    save_to(&file, &settings).unwrap();
-    assert_eq!(shown(&load_from(&file)), custom());
-    let _ = std::fs::remove_dir_all(&dir);
-}
-
-#[test]
-fn the_file_holds_the_camel_case_keys_the_front_end_uses() {
-    let (dir, file) = scratch("keys");
-    save_to(&file, &Settings::default()).unwrap();
-    let written: Value = serde_json::from_slice(&std::fs::read(&file).unwrap()).unwrap();
-    let keys: Vec<&str> = written.as_object().unwrap().keys().map(String::as_str).collect();
-    assert_eq!(
-        keys,
-        [
-            "soundEnabled",
-            "soundVolume",
-            "autoCloseInterval",
-            "openOnHover",
-            "absenceInterval",
-            "activeIntegrations",
-            "mainPill",
-            "screen",
-            "autostart",
-            "hooksInstalled",
-            "model",
-            "showPlanInNotch",
-            "planRelayInstalled",
-            "showCodexPlanInNotch",
-            "chatProvider",
-            "chatModels",
-            "ollamaUrl",
-            "lmstudioUrl",
-            "customUrl",
-            "shortcuts",
-            "mochiOutfit",
-            "pillColors",
-            "language",
-            "desktopMochi",
-            "phoneLink",
-            "phoneChat",
-            "phoneChatModels",
-            "phoneDetails",
-            "phoneAnswers",
-            "phoneDiffs",
-            "phoneUsage",
-            "phoneServices",
-            "phoneRelay",
-            "phoneRelayUrl",
-            "showClock",
-            "minimizeOnHoverAway",
-            "hoverAwayDelay",
-        ]
-    );
-    let _ = std::fs::remove_dir_all(&dir);
-}
-
-#[test]
-fn a_save_replaces_the_file_that_was_there() {
-    let (dir, file) = scratch("replace");
-    std::fs::write(&file, CUSTOM).unwrap();
-    save_to(&file, &Settings::default()).unwrap();
-    assert_eq!(shown(&load_from(&file)), defaults());
-    let _ = std::fs::remove_dir_all(&dir);
-}
-
-#[test]
-fn a_save_leaves_nothing_but_settings_json_behind() {
-    let (dir, file) = scratch("tidy");
-    save_to(&file, &Settings::default()).unwrap();
-    save_to(&file, &Settings::default()).unwrap();
-    assert_eq!(names(&dir), ["settings.json"]);
-    let _ = std::fs::remove_dir_all(&dir);
-}
-
-#[test]
-fn a_temporary_file_that_cannot_be_written_leaves_the_original_alone() {
-    // The new contents go to a file beside the target first. With a
-    // directory squatting on that name, the write cannot even start.
-    let (dir, file) = scratch("blocked");
-    std::fs::write(&file, CUSTOM).unwrap();
-    let temp = dir.join(format!("settings.json.coucou-{}", std::process::id()));
-    std::fs::create_dir(&temp).unwrap();
-
-    assert!(save_to(&file, &Settings::default()).is_err());
-    assert_eq!(std::fs::read(&file).unwrap(), CUSTOM.as_bytes());
-    let _ = std::fs::remove_dir_all(&dir);
-}
+include!("settings_write_tests.rs");
