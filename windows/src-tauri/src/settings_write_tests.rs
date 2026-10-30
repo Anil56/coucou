@@ -50,6 +50,7 @@ fn the_file_holds_the_camel_case_keys_the_front_end_uses() {
             "showCodexPlanInNotch",
             "chatProvider",
             "chatModels",
+            "chatSubscriptions",
             "ollamaUrl",
             "lmstudioUrl",
             "customUrl",
@@ -106,5 +107,29 @@ fn a_temporary_file_that_cannot_be_written_leaves_the_original_alone() {
 
     assert!(save_to(&file, &Settings::default()).is_err());
     assert_eq!(std::fs::read(&file).unwrap(), CUSTOM.as_bytes());
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn concurrent_saves_never_collide() {
+    let (dir, file) = scratch("concurrent");
+    let handles: Vec<_> = (0..20)
+        .map(|i| {
+            let path = file.clone();
+            std::thread::spawn(move || {
+                let mut s = Settings::default();
+                s.sound_volume = (i as f64) * 0.05;
+                save_to(&path, &s)
+            })
+        })
+        .collect();
+
+    for h in handles {
+        assert!(h.join().unwrap().is_ok());
+    }
+
+    // Must still be valid settings that load cleanly without corruption
+    let loaded = load_from(&file);
+    assert!(loaded.sound_volume >= 0.0);
     let _ = std::fs::remove_dir_all(&dir);
 }

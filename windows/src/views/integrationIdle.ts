@@ -47,17 +47,25 @@ export function idleCard(
   const def = pillDefinition(task.id);
   const status = isAgent
     ? {
-        label: task.steps.length > 0 ? task.steps[task.steps.length - 1] : t("Ready · waiting for session"),
+        label: task.steps.length > 0 ? task.steps[task.steps.length - 1] : t("Ready · no setup needed"),
         color: "#22C55E",
       }
     : idleStatus(task.id, info, State.settings.model);
 
   const actions = h("div", { class: "int-actions" });
-  if (isAgent) {
+  if (task.id === "integration_claude") {
     actions.append(
       h("button", {
         class: "link-btn",
-        text: t("Open Chat"),
+        text: t("Open Visual Studio Code"),
+        onclick: () => void Bridge.openInVSCode(task.sessionCwd ?? null),
+      }),
+    );
+  } else if (isAgent) {
+    actions.append(
+      h("button", {
+        class: "link-btn",
+        text: t("Open chat"),
         onclick: () => {
           State.view = "prompt";
           State.notify();
@@ -116,7 +124,7 @@ export function idleCard(
     { class: "int-card" },
     headerFn(
       task.color,
-      task.id === "integration_claude" ? "VS Code" : task.name,
+      task.id === "integration_claude" ? (def?.name ?? "Claude Code") : task.name,
       kindLabel,
     ),
     h("div", { class: "int-status" }, dot(status.color, 5), h("span", { text: status.label })),

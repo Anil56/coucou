@@ -5,6 +5,7 @@ import { Bridge } from "../core/bridge";
 import type { Settings } from "../core/state";
 import { GEMINI_MODELS } from "../hooks/useChatProvider";
 import { h, clear } from "../views/dom";
+import { t } from "../i18n/i18n";
 
 function statusDot(ok: boolean): HTMLElement {
   const dot = h("i", { class: "dot" });
@@ -33,8 +34,8 @@ export function buildGeminiSection(
     spellcheck: "false",
   }) as HTMLInputElement;
 
-  const saveBtn = h("button", { class: "primary", text: "Save key" });
-  const clearBtn = h("button", { class: "danger", text: "Remove" });
+  const saveBtn = h("button", { class: "primary", text: t("Save key") });
+  const clearBtn = h("button", { class: "danger", text: t("Remove") });
   const feedback = h("div", {});
 
   async function refresh() {
@@ -70,7 +71,7 @@ export function buildGeminiSection(
     try {
       await Bridge.secretClear("gemini-api-key");
       await Bridge.secretClear("google-api-key");
-      feedback.append(h("div", { class: "notice ok", text: "Key removed." }));
+      feedback.append(h("div", { class: "notice ok", text: t("Key removed.") }));
       await refresh();
     } catch (err) {
       feedback.append(h("div", { class: "notice err", text: `Could not remove: ${String(err)}` }));
@@ -97,8 +98,8 @@ export function buildGeminiSection(
     {},
     h("h2", {}, dot, h("span", { text: "Antigravity / Gemini" })),
     state,
-    h("div", { class: "row" }, h("label", { text: "API key" }), field, saveBtn, clearBtn),
-    h("div", { class: "row" }, h("label", { text: "Model" }), model, h("span", { class: "hint", text: "1M-2M token context" })),
+    h("div", { class: "row" }, h("label", { text: t("API key") }), field, saveBtn, clearBtn),
+    h("div", { class: "row" }, h("label", { text: t("Model") }), model, h("span", { class: "hint", text: "1M-2M token context" })),
     feedback,
   );
 }
