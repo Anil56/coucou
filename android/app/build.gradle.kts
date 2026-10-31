@@ -76,6 +76,9 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$cameraX")
     implementation("androidx.camera:camera-view:$cameraX")
     implementation("com.google.zxing:core:3.5.3")
+    // The Galaxy Watch / Wear OS app (android/wear). Google's Wearable API is the only way to reach a paired watch; only messages to nearby
+    // nodes are used (no Data Layer items, no cloud sync), and on a phone without Google Play services the calls fail quietly.
+    implementation("com.google.android.gms:play-services-wearable:18.2.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303") // android.jar stubs org.json in JVM tests
 }
@@ -90,7 +93,7 @@ val verifyReleaseNoLogs by tasks.registering {
     doLast {
         val apks = apkDir.get().asFile.walkTopDown().filter { it.extension == "apk" }.toList()
         check(apks.size == 1) { "expected one release APK, found ${apks.size}" }
-        val leftovers = listOf("CoucouOverlay", "CoucouLaunch", "CoucouDiscovery", "CoucouIsland", "island failed", "cannot browse", "ignored an early tap")
+        val leftovers = listOf("CoucouOverlay", "CoucouLaunch", "CoucouWatch", "CoucouDiscovery", "CoucouIsland", "island failed", "cannot browse", "ignored an early tap")
         ZipFile(apks.single()).use { zip ->
             for (entry in zip.entries().asSequence().filter { it.name.endsWith(".dex") }) {
                 val text = String(zip.getInputStream(entry).readBytes(), Charsets.ISO_8859_1)

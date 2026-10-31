@@ -227,6 +227,8 @@
     <string name="settings_section_requests">অনুমতির অনুরোধ</string>
     <string name="settings_no_wake">অনুরোধের জন্য স্ক্রিন জাগাবেন না</string>
     <string name="settings_no_wake_hint">অনুরোধ তবুও শব্দ ও বিজ্ঞপ্তিসহ আসে; আপনি না দেখা পর্যন্ত শুধু স্ক্রিন অন্ধকার থাকে।</string>
+    <string name="settings_watch_allow">আমার ঘড়ি থেকে অনুমতি দিন</string>
+    <string name="settings_watch_allow_hint">Coucou থাকা ঘড়ি সবসময় প্রত্যাখ্যান করতে পারে। এটি চালু থাকলে সেটি অনুমতিও দিতে পারে, নিজের স্ক্রিন লক ও দীর্ঘ চাপের পরে। বন্ধ: অনুমতি এই ফোনেই, আপনার আঙুলের ছাপ দিয়ে।</string>
     <string name="settings_vibration">অনুরোধের জন্য কম্পন</string>
     <string name="vibration_standard">স্বাভাবিক</string>
     <string name="vibration_short">ছোট</string>

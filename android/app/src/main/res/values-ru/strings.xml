@@ -227,6 +227,8 @@
     <string name="settings_section_requests">Запросы разрешений</string>
     <string name="settings_no_wake">Не включать экран при запросе</string>
     <string name="settings_no_wake_hint">Запрос всё равно приходит со звуком и уведомлением; просто экран остаётся тёмным, пока ты не посмотришь.</string>
+    <string name="settings_watch_allow">Разрешать с часов</string>
+    <string name="settings_watch_allow_hint">Часы с Coucou всегда могут отклонить запрос. Если это включено, они могут и разрешить — после своей блокировки экрана и долгого нажатия. Выключено: разрешение только на этом телефоне, по отпечатку пальца.</string>
     <string name="settings_vibration">Вибрация при запросе</string>
     <string name="vibration_standard">Обычная</string>
     <string name="vibration_short">Короткая</string>

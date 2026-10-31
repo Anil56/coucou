@@ -227,6 +227,8 @@
     <string name="settings_section_requests">طلبات الإذن</string>
     <string name="settings_no_wake">عدم تشغيل الشاشة عند وصول طلب</string>
     <string name="settings_no_wake_hint">يصل الطلب بصوته وإشعاره كالعادة؛ فقط تبقى الشاشة مظلمة حتى تنظر إليها.</string>
+    <string name="settings_watch_allow">السماح من ساعتي</string>
+    <string name="settings_watch_allow_hint">يمكن للساعة التي عليها Coucou الرفض دائمًا. عند تفعيل هذا يمكنها السماح أيضًا، بعد قفل شاشتها وضغطة مطوّلة. عند الإيقاف: يبقى السماح على هذا الهاتف، ببصمتك.</string>
     <string name="settings_vibration">اهتزاز الطلب</string>
     <string name="vibration_standard">عادي</string>
     <string name="vibration_short">قصير</string>

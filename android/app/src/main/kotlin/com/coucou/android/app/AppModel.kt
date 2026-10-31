@@ -164,11 +164,13 @@ class AppModel(private val context: Context) : LinkListener {
 
     fun updateSettings(next: UserSettings) {
         val relayChanged = next.useRelay != settings.useRelay
+        val watchChanged = next.watchAllow != settings.watchAllow
         settings = next
         UserSettings.save(kv, next)
         applySound()
         notifier.applyApprovalSettings(settings.vibration, settings.keepScreenOff)
         com.coucou.android.core.MotionState.choice = settings.motion
+        if (watchChanged) pushGlance() // the watch learns whether it may Allow
         // Switching the relay on or off rebuilds the connection with the right routes.
         if (relayChanged) currentPairing?.let { restartLink(it) }
     }
@@ -182,6 +184,7 @@ class AppModel(private val context: Context) : LinkListener {
         applySound()
         notifier.applyApprovalSettings(settings.vibration, settings.keepScreenOff)
         com.coucou.android.core.MotionState.choice = settings.motion
+        main.post { watch } // listens for a watch from the start (after every property below is set)
     }
 
     /** What the computer says Mochi wears ("auto" or an outfit); the last one it told, kept for when it is away. */
@@ -375,10 +378,26 @@ class AppModel(private val context: Context) : LinkListener {
     /** The small surfaces follow every change of sessions, requests and link; none of them runs a timer. */
     private fun pushGlance() {
         val g = glance()
+        val content = widgetContent(g)
         notifier.updateOngoing(this, g)
         GlanceWidget.update(context, g)
-        WidgetHub.update(context, widgetContent(g))
+        WidgetHub.update(context, content)
         GlanceTile.requestUpdate(context)
+        watch.push(watchState(content))
+    }
+
+    // ── The watch (android/wear/README.md) ─────────────────────────────────────
+
+    private fun watchState(content: com.coucou.android.core.WidgetContent = widgetContent()): com.coucou.android.core.WatchState =
+        com.coucou.android.core.WatchStateBuilder.build(content, approvals, this::agentName, settings.watchAllow)
+
+    private val watch by lazy { WatchBridge(context, { watchState() }, ::watchDecision) }
+
+    /** Allow or Deny tapped on the watch. Allow only with the switch on; [decide] then checks the request like a tap on the phone. */
+    private fun watchDecision(d: com.coucou.android.core.WatchDecision) {
+        if (d.allow && !settings.watchAllow) return
+        if (approvals.none { it.fingerprint == d.fingerprint }) return
+        decide(d.fingerprint, d.allow)
     }
 
     private fun refreshIsland() {

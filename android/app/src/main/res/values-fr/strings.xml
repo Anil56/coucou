@@ -227,6 +227,8 @@
     <string name="settings_section_requests">Demandes d\'autorisation</string>
     <string name="settings_no_wake">Ne pas allumer l\'écran pour une demande</string>
     <string name="settings_no_wake_hint">La demande arrive toujours avec son son et sa notification ; seul l\'écran reste éteint jusqu\'à ce que tu regardes.</string>
+    <string name="settings_watch_allow">Autoriser depuis ma montre</string>
+    <string name="settings_watch_allow_hint">Une montre avec Coucou peut toujours refuser. Avec ce réglage, elle peut aussi autoriser, après son propre verrouillage et un appui long. Désactivé : autoriser reste sur ce téléphone, derrière ton empreinte.</string>
     <string name="settings_vibration">Vibration pour une demande</string>
     <string name="vibration_standard">Standard</string>
     <string name="vibration_short">Courte</string>

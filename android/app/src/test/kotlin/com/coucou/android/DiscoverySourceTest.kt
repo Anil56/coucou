@@ -15,7 +15,8 @@ class DiscoverySourceTest {
 
     @Test fun itUsesTheFrameworkAndNoNewLibrary() {
         assertTrue(nsd.contains("NsdManager") && nsd.contains("Discovery.SERVICE_TYPE"))
-        val gradle = File("build.gradle.kts").readText().lowercase()
+        // The one Play services library is the watch link's (ScanScreenTest checks it is the only one); discovery uses none.
+        val gradle = File("build.gradle.kts").readText().lowercase().replace("play-services-wearable", "")
         for (bad in listOf("jmdns", "zeroconf", "play-services", "mlkit", "androidx.nsd")) assertFalse("build.gradle.kts mentions $bad", gradle.contains(bad))
         assertEquals("_coucou._tcp", Regex("""SERVICE_TYPE\s*=\s*"([^"]+)"""").find(discovery)!!.groupValues[1])
     }

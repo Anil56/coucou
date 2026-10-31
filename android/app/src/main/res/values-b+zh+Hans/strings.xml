@@ -227,6 +227,8 @@
     <string name="settings_section_requests">权限请求</string>
     <string name="settings_no_wake">收到请求时不点亮屏幕</string>
     <string name="settings_no_wake_hint">请求仍会带着声音和通知送达，只是屏幕会保持熄灭，直到你查看。</string>
+    <string name="settings_watch_allow">允许在手表上批准</string>
+    <string name="settings_watch_allow_hint">装有 Coucou 的手表始终可以拒绝。开启后，它也可以批准，但需先通过手表自己的屏幕锁并长按。关闭时：批准只能在这部手机上通过指纹完成。</string>
     <string name="settings_vibration">请求的振动</string>
     <string name="vibration_standard">标准</string>
     <string name="vibration_short">短</string>

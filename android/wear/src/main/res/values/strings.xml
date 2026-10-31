@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Coucou</string>
+    <string name="open_on_phone">Open Coucou on your phone</string>
+    <string name="phone_away">Your phone is out of reach</string>
+    <string name="looking_for_phone">Looking for your phone…</string>
+    <string name="no_agents">No agents running</string>
+    <string name="needs_you">Needs your OK</string>
+    <string name="deny">Deny</string>
+    <string name="hold_to_allow">Hold to allow</string>
+    <string name="allow_off">Allow from the watch is off. Turn it on in Coucou on your phone (Settings, Permission requests).</string>
+    <string name="allow_no_lock">Set a screen lock on your watch to allow from it.</string>
+    <string name="allow_on_computer">This command was cut: allow it on your computer.</string>
+    <string name="sent">Sent to your phone</string>
+    <string name="not_sent">Your phone can\'t be reached</string>
+    <string name="tile_open">Open</string>
+    <plurals name="tile_waiting">
+        <item quantity="one">%1$d waiting</item>
+        <item quantity="other">%1$d waiting</item>
+    </plurals>
+</resources>

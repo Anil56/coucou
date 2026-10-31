@@ -227,6 +227,8 @@
     "settings_section_requests": "Permission requests",
     "settings_no_wake": "Don't wake the screen for a request",
     "settings_no_wake_hint": "The request still arrives with its sound and its notification; only the screen stays dark until you look.",
+    "settings_watch_allow": "Allow from my watch",
+    "settings_watch_allow_hint": "A watch with Coucou can always Deny. With this on it can also Allow, after its own screen lock and a long press. Off: Allow stays on this phone, behind your fingerprint.",
     "settings_vibration": "Vibration for a request",
     "vibration_standard": "Standard",
     "vibration_short": "Short",

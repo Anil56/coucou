@@ -226,6 +226,8 @@
     "settings_section_requests": "Pedidos de permissão",
     "settings_no_wake": "Não acender a tela para um pedido",
     "settings_no_wake_hint": "O pedido continua chegando com som e notificação; só a tela fica apagada até você olhar.",
+    "settings_watch_allow": "Permitir pelo meu relógio",
+    "settings_watch_allow_hint": "Um relógio com o Coucou sempre pode negar. Com isto ativado ele também pode permitir, após o próprio bloqueio de tela e um toque longo. Desativado: permitir fica neste celular, com a sua digital.",
     "settings_vibration": "Vibração para um pedido",
     "vibration_standard": "Padrão",
     "vibration_short": "Curta",

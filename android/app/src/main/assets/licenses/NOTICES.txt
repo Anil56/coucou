@@ -18,6 +18,10 @@ The pairing QR code is read with ZXing Core 3.5.3 ("Zebra Crossing", https://git
 
 The user interface, the camera preview and the language runtime come from AndroidX (Jetpack Compose, Material 3, Activity, Lifecycle, CameraX), Copyright The Android Open Source Project, and the Kotlin standard library, Copyright JetBrains s.r.o. and Kotlin Programming Language contributors. They are licensed under the Apache License, Version 2.0, the full text of which is below. They are used unmodified.
 
+5. Google Play services Wearable
+
+The link to a Wear OS watch (such as a Samsung Galaxy Watch) uses the Google Play services Wearable library, Copyright Google LLC, under the Android Software Development Kit License (https://developer.android.com/studio/terms). It only carries messages between this phone and a nearby watch that has Coucou; nothing else is sent. Without Google Play services the watch link is simply not there.
+
 No warranty: the software is provided "as is", as the licences below say.
 
 ------------------------------

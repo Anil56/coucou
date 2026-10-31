@@ -232,6 +232,8 @@ internal object TextIds {
         "settings_section_requests" to R.string.settings_section_requests,
         "settings_no_wake" to R.string.settings_no_wake,
         "settings_no_wake_hint" to R.string.settings_no_wake_hint,
+        "settings_watch_allow" to R.string.settings_watch_allow,
+        "settings_watch_allow_hint" to R.string.settings_watch_allow_hint,
         "settings_vibration" to R.string.settings_vibration,
         "vibration_standard" to R.string.vibration_standard,
         "vibration_short" to R.string.vibration_short,

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Coucou</string>
+    <string name="open_on_phone">Ouvre Coucou sur ton téléphone</string>
+    <string name="phone_away">Ton téléphone est hors de portée</string>
+    <string name="looking_for_phone">Recherche de ton téléphone…</string>
+    <string name="no_agents">Aucun agent en cours</string>
+    <string name="needs_you">Attend ton accord</string>
+    <string name="deny">Refuser</string>
+    <string name="hold_to_allow">Maintiens pour autoriser</string>
+    <string name="allow_off">Autoriser depuis la montre est désactivé. Active-le dans Coucou sur ton téléphone (Réglages, Demandes d\'autorisation).</string>
+    <string name="allow_no_lock">Définis un verrouillage d\'écran sur ta montre pour autoriser depuis elle.</string>
+    <string name="allow_on_computer">Cette commande a été coupée : autorise-la sur ton ordinateur.</string>
+    <string name="sent">Envoyé à ton téléphone</string>
+    <string name="not_sent">Ton téléphone est injoignable</string>
+    <string name="tile_open">Ouvrir</string>
+    <plurals name="tile_waiting">
+        <item quantity="one">%1$d en attente</item>
+        <item quantity="many">%1$d en attente</item>
+        <item quantity="other">%1$d en attente</item>
+    </plurals>
+</resources>

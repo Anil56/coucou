@@ -317,6 +317,10 @@ fun SettingsScreen(model: AppModel, onHistory: () -> Unit, onGallery: () -> Unit
                     model.updateSettings(s.copy(keepScreenOff = it))
                 }
                 RowDivider()
+                SettingSwitch(stringResource(R.string.settings_watch_allow), stringResource(R.string.settings_watch_allow_hint), s.watchAllow) {
+                    model.updateSettings(s.copy(watchAllow = it))
+                }
+                RowDivider()
                 ChoiceRow(
                     stringResource(R.string.settings_vibration),
                     listOf(

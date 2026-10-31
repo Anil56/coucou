@@ -227,6 +227,8 @@
     <string name="settings_section_requests">अनुमति के अनुरोध</string>
     <string name="settings_no_wake">अनुरोध के लिए स्क्रीन न जगाएँ</string>
     <string name="settings_no_wake_hint">अनुरोध फिर भी आवाज़ और नोटिफ़िकेशन के साथ आता है; बस आपके देखने तक स्क्रीन अँधेरी रहती है।</string>
+    <string name="settings_watch_allow">मेरी घड़ी से अनुमति दें</string>
+    <string name="settings_watch_allow_hint">Coucou वाली घड़ी हमेशा मना कर सकती है। इसे चालू करने पर वह अनुमति भी दे सकती है, अपने स्क्रीन लॉक और लंबे दबाव के बाद। बंद: अनुमति इसी फ़ोन पर, आपके फ़िंगरप्रिंट से ही।</string>
     <string name="settings_vibration">अनुरोध के लिए कंपन</string>
     <string name="vibration_standard">सामान्य</string>
     <string name="vibration_short">छोटा</string>

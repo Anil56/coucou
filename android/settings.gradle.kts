@@ -7,3 +7,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "coucou-android"
 include(":app")
+include(":wear")

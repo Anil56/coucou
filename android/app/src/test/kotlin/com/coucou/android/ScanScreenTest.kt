@@ -1,6 +1,7 @@
 package com.coucou.android
 
 import java.io.File
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -81,7 +82,12 @@ class ScanScreenTest {
     }
 
     @Test fun theNewLibrariesAreCameraXAndZxingCoreOnly_noPlayServicesNoMlKit() {
-        val g = file("build.gradle.kts")
+        // The single exception is the watch link (android/wear): Google's Wearable library, the only way to reach a Wear OS watch. No other
+        // Play services library, and nothing of Firebase, ML Kit, ads or crash reporting.
+        val wearable = "implementation(\"com.google.android.gms:play-services-wearable:"
+        val all = file("build.gradle.kts")
+        assertEquals(1, Regex(Regex.escape(wearable)).findAll(all).count())
+        val g = all.replace(wearable, "")
         assertTrue(g.contains("androidx.camera:camera-core") && g.contains("com.google.zxing:core:"))
         for (bad in listOf("com.google.android.gms", "play-services", "mlkit", "firebase", "admob", "billingclient", "crashlytics", "camera-mlkit")) {
             assertFalse("build.gradle.kts must not mention $bad", g.contains(bad, ignoreCase = true))

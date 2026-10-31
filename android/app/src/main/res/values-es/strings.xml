@@ -227,6 +227,8 @@
     <string name="settings_section_requests">Solicitudes de permiso</string>
     <string name="settings_no_wake">No encender la pantalla por una solicitud</string>
     <string name="settings_no_wake_hint">La solicitud sigue llegando con su sonido y su notificación; solo la pantalla permanece apagada hasta que mires.</string>
+    <string name="settings_watch_allow">Permitir desde mi reloj</string>
+    <string name="settings_watch_allow_hint">Un reloj con Coucou siempre puede denegar. Con esto activado también puede permitir, tras su propio bloqueo de pantalla y una pulsación larga. Desactivado: permitir se queda en este teléfono, tras tu huella.</string>
     <string name="settings_vibration">Vibración para una solicitud</string>
     <string name="vibration_standard">Estándar</string>
     <string name="vibration_short">Corta</string>

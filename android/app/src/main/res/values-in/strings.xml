@@ -227,6 +227,8 @@
     <string name="settings_section_requests">Permintaan izin</string>
     <string name="settings_no_wake">Jangan nyalakan layar untuk permintaan</string>
     <string name="settings_no_wake_hint">Permintaan tetap datang dengan suara dan notifikasinya; hanya layar yang tetap gelap sampai kamu melihatnya.</string>
+    <string name="settings_watch_allow">Izinkan dari jam tangan saya</string>
+    <string name="settings_watch_allow_hint">Jam tangan dengan Coucou selalu bisa menolak. Jika ini aktif, jam juga bisa mengizinkan, setelah kunci layarnya sendiri dan tekan lama. Nonaktif: izinkan tetap di ponsel ini, dengan sidik jari Anda.</string>
     <string name="settings_vibration">Getaran untuk permintaan</string>
     <string name="vibration_standard">Standar</string>
     <string name="vibration_short">Pendek</string>

@@ -226,6 +226,8 @@
     "settings_section_requests": "Permintaan izin",
     "settings_no_wake": "Jangan nyalakan layar untuk permintaan",
     "settings_no_wake_hint": "Permintaan tetap datang dengan suara dan notifikasinya; hanya layar yang tetap gelap sampai kamu melihatnya.",
+    "settings_watch_allow": "Izinkan dari jam tangan saya",
+    "settings_watch_allow_hint": "Jam tangan dengan Coucou selalu bisa menolak. Jika ini aktif, jam juga bisa mengizinkan, setelah kunci layarnya sendiri dan tekan lama. Nonaktif: izinkan tetap di ponsel ini, dengan sidik jari Anda.",
     "settings_vibration": "Getaran untuk permintaan",
     "vibration_standard": "Standar",
     "vibration_short": "Pendek",
